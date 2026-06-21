@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Workspace</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+    <div class="logo" id="modeToggleBtn" title="Switch mode">
+        <span id="logoIcon">📚</span>
+        <span id="logoText">CA Library</span>
+        <span class="mode-badge" id="modeBadge">Library</span>
+    </div>
+
+    <form id="searchForm" class="search-form">
+        <input autocomplete="off" type="text" id="searchInput" class="search-input" placeholder="Search the web..." required>
+        <select id="searchEngine" class="search-select">
+            <option value="google">Google</option>
+            <option value="youtube">YouTube</option>
+            <option value="gemini">Gemini</option>
+            <option value="chatgpt">ChatGPT</option>
+            <option value="claude">Claude</option>
+        </select>
+        <button type="submit" class="search-btn" title="Search">🔍</button>
+    </form>
+
+    <button id="toggleBtn" title="Collapse sidebar">☰</button>
+</div>
+
+<div class="layout">
+    <nav class="subjects_side_navbar" id="sideNavbar"></nav>
+    <div class="main_content" id="mainContent"></div>
+</div>
+
+<script>
+const modeToggleBtn = document.getElementById("modeToggleBtn");
+const sideNavbar    = document.getElementById("sideNavbar");
+const mainContent   = document.getElementById("mainContent");
+const logoIcon      = document.getElementById("logoIcon");
+const logoText      = document.getElementById("logoText");
+const modeBadge     = document.getElementById("modeBadge");
+
+let isExamMode = false;
+
+/* ── FILE MAP (EXAM HALL) ──────────────────────────────── */
+const fileMap = {
+    "MTP": {
+        "Jan 2025 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_1/JAN_2025_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "Jan 2025 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/JAN_2025_MTP_2/JAN_2025_MTP_2_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2024 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_1/MAY_2024_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2024 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/MAY_2024_MTP_2/MAY_2024_MTP_2_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2025 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_1/MAY_2025_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2025 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/MAY_2025_MTP_2/MAY_2025_MTP_2_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2026 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_1/MAY_2026_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "May 2026 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/MAY_2026_MTP_2/MAY_2026_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf" }
+        ],
+        "Sep 2024 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_1/SEP_2024_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "Sep 2024 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/SEP_2024_MTP_2/SEP_2024_MTP_2_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "Sep 2025 MTP 1": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_1/SEP_2025_MTP_1_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ],
+        "Sep 2025 MTP 2": [
+            { name: "Paper 1 - Accounts", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_1_-_ACCO_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_1_-_ACCO_ANSWERS.pdf" },
+            { name: "Paper 2 - Law", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_2_-_LAW_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_2_-_LAW_ANSWERS.pdf" },
+            { name: "Paper 3 - Tax", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_3_-_TAX_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_3_-_TAX_ANSWERS.pdf" },
+            { name: "Paper 4 - Cost", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_4_-_COST_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_4_-_COST_ANSWERS.pdf" },
+            { name: "Paper 5 - Audit", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_5_-_AUDIT_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_5_-_AUDIT_ANSWERS.pdf" },
+            { name: "Paper 6 - FM & SM", qFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_6_-_FM_&_SM_QUESTIONS.pdf", aFile: "mtp/SEP_2025_MTP_2/SEP_2025_MTP_2_PAPER_6_-_FM_&_SM_ANSWERS.pdf" }
+        ]
+    },
+    "RTP": {
+        "Jan 2025": [
+            { name: "Group 1", file: "rtp/JAN_2025/rtp_gr_1_jan_2025.pdf", fileAlt: "rtp/JAN_2025/decrypted_rtp_gr_1_jan_2025.pdf" },
+            { name: "Group 2", file: "rtp/JAN_2025/rtp_gr_2_jan_2025.pdf", fileAlt: "rtp/JAN_2025/decrypted_rtp_gr_2_jan_2025.pdf" }
+        ],
+        "Jan 2026": [
+            { name: "Group 1", file: "rtp/JAN_2026/rtp_gr_1_jan_2026.pdf", fileAlt: "rtp/JAN_2026/decrypted_rtp_gr_1_jan_2026.pdf" },
+            { name: "Group 2", file: "rtp/JAN_2026/rtp_gr_2_jan_2026.pdf", fileAlt: "rtp/JAN_2026/decrypted_rtp_gr_2_jan_2026.pdf" }
+        ],
+        "May 2024": [
+            { name: "Group 1", file: "rtp/MAY_2024/rtp_gr_1_may_2024.pdf", fileAlt: "rtp/MAY_2024/decrypted_rtp_gr_1_may_2024.pdf" },
+            { name: "Group 2", file: "rtp/MAY_2024/rtp_gr_2_may_2024.pdf", fileAlt: "rtp/MAY_2024/decrypted_rtp_gr_2_may_2024.pdf" }
+        ],
+        "May 2025": [
+            { name: "Group 1", file: "rtp/MAY_2025/rtp_gr_1_may_2025.pdf", fileAlt: "rtp/MAY_2025/decrypted_rtp_gr_1_may_2025.pdf" },
+            { name: "Group 2", file: "rtp/MAY_2025/rtp_gr_2_may_2025.pdf", fileAlt: "rtp/MAY_2025/decrypted_rtp_gr_2_may_2025.pdf" }
+        ],
+        "May 2026": [
+            { name: "Group 1", file: "rtp/MAY_2026/rtp_gr_1_may_2026.pdf", fileAlt: "rtp/MAY_2026/decrypted_rtp_gr_1_may_2026.pdf" },
+            { name: "Group 2", file: "rtp/MAY_2026/rtp_gr_2_may_2026.pdf", fileAlt: "rtp/MAY_2026/decrypted_rtp_gr_2_may_2026.pdf" }
+        ],
+        "Sep 2024": [
+            { name: "Group 1", file: "rtp/SEP_2024/rtp_gr_1_sep_2024.pdf", fileAlt: "rtp/SEP_2024/decrypted_rtp_gr_1_sep_2024.pdf" },
+            { name: "Group 2", file: "rtp/SEP_2024/rtp_gr_2_sep_2024.pdf", fileAlt: "rtp/SEP_2024/decrypted_rtp_gr_2_sep_2024.pdf" }
+        ],
+        "Sep 2025": [
+            { name: "Group 1", file: "rtp/SEP_2025/rtp_gr_1_sep_2025.pdf", fileAlt: "rtp/SEP_2025/decrypted_rtp_gr_1_sep_2025.pdf" },
+            { name: "Group 2", file: "rtp/SEP_2025/rtp_gr_2_sep_2025.pdf", fileAlt: "rtp/SEP_2025/decrypted_rtp_gr_2_sep_2025.pdf" }
+        ]
+    },
+    "PYQ": {
+        "Paper 1 - Accounts": [
+            { name: "May 2024", aFile: "pyq/paper_1/ca_inter_anwer_may_24_paper_1.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_1/ca_inter_anwer_sep_24_paper_1.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_1/ca_inter_anwer_jan_25_paper_1.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_1/ca_inter_anwer_may_25_paper_1.pdf" },
+            { name: "Sep 2025", aFile: "pyq/paper_1/sep_2025_paper_1_answers.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_1/ca_inter_jan_2026_paper_1.pdf" }
+        ],
+        "Paper 2 - Law": [
+            { name: "May 2024", aFile: "pyq/paper_2/ca_inter_anwer_may_24_paper_2.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_2/ca_inter_anwer_sep_24_paper_2.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_2/ca_inter_anwer_jan_25_paper_2.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_2/ca_inter_anwer_may_25_paper_2.pdf" },
+            { name: "Sep 2025", qFile: "pyq/paper_2/sep_2025_law.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_2/ca_inter_jan_2026_p2.pdf" }
+        ],
+        "Paper 3 - Tax": [
+            { name: "May 2024", aFile: "pyq/paper_3/ca_inter_anwer_may_24_paper_3.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_3/ca_inter_anwer_sep_24_paper_3.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_3/ca_inter_anwer_jan_25_paper_3.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_3/ca_inter_anwer_may_25_paper_3.pdf" },
+            { name: "Sep 2025", qFile: "pyq/paper_3/sep_2025_tax.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_3/ca_inter_jan_2026_p3.pdf" }
+        ],
+        "Paper 4 - Costing": [
+            { name: "May 2024", aFile: "pyq/paper_4/ca_inter_anwer_may_24_paper_4.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_4/ca_inter_anwer_sep_24_paper_4.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_4/ca_inter_anwer_jan_25_paper_4.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_4/ca_inter_anwer_may_25_paper_4.pdf" },
+            { name: "Sep 2025", qFile: "pyq/paper_4/sep_2025_cost.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_4/ca_inter_jan_2026_p4.pdf" }
+        ],
+        "Paper 5 - Audit": [
+            { name: "May 2024", aFile: "pyq/paper_5/ca_inter_anwer_may_24_paper_5.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_5/ca_inter_anwer_sep_24_paper_5.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_5/ca_inter_anwer_jan_25_paper_5.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_5/ca_inter_anwer_may_25_paper_5.pdf" },
+            { name: "Sep 2025", qFile: "pyq/paper_5/sep_2025_audit.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_5/ca_inter_jan_2026_p5.pdf" }
+        ],
+        "Paper 6 - FM & SM": [
+            { name: "May 2024", aFile: "pyq/paper_6/ca_inter_anwer_may_24_paper_6.pdf" },
+            { name: "Sep 2024", aFile: "pyq/paper_6/ca_inter_anwer_sep_24_paper_6.pdf" },
+            { name: "Jan 2025", aFile: "pyq/paper_6/ca_inter_anwer_jan_25_paper_6.pdf" },
+            { name: "May 2025", aFile: "pyq/paper_6/ca_inter_anwer_may_25_paper_6.pdf" },
+            { name: "Sep 2025", qFile: "pyq/paper_6/sep_2025_fmsm.pdf" },
+            { name: "Jan 2026", qFile: "pyq/paper_6/ca_inter_jan_2026_p6.pdf" }
+        ]
+    },
+    "CASE_STUDY": {
+        "Case Study Books": [
+            { name: "CASE STUDY ACCOUNTS", file: "case_study_book/csa.pdf" },
+            { name: "CASE STUDY AUDIT", file: "case_study_book/csae.pdf" },
+            { name: "CASE STUDY COSTING", file: "case_study_book/csc.pdf" },
+            { name: "CASE STUDY FINANCIAL MANAGEMENT", file: "case_study_book/csfm.pdf" },
+            { name: "CASE STUDY GST", file: "case_study_book/csgst.pdf" },
+            { name: "CASE STUDY INCOME TAX", file: "case_study_book/csit.pdf" },
+            { name: "CASE STUDY LAW", file: "case_study_book/csl.pdf" },
+            { name: "CASE STUDY STATEGIC MANAGEMENT", file: "case_study_book/cssm.pdf" }
+        ]
+    },
+    "MEGA_MTP": {
+        "Mega MTP": [
+            { name: "Group 1", file: "mega_mtp/gr1mtp.pdf" },
+            { name: "Group 2", file: "mega_mtp/gr2mtp.pdf" }
+        ]
+    }
+};
+
+/* ── LIBRARY MAP ───────────────────────────────────────── */
+const libraryMap = {
+    "Accounts": {
+        notes: [
+            { title: "1 Financial Statement of Companies", file: "subjects/accounts/studymaterial/one_acc/1 Financial Statement of Companies.pdf", thumb: "" },
+            { title: "2 Cash Flow Statement", file: "subjects/accounts/studymaterial/one_acc/2 Cash Flow Statement.pdf", thumb: "" },
+            { title: "3 Buyback of Securities", file: "subjects/accounts/studymaterial/one_acc/3 Buyback of Securities.pdf", thumb: "" },
+            { title: "4 Internal Reconstruction", file: "subjects/accounts/studymaterial/one_acc/4 Internal Reconstruction.pdf", thumb: "" },
+            { title: "5 Amalgamation", file: "subjects/accounts/studymaterial/one_acc/5 Amalgamation.pdf", thumb: "" },
+            { title: "6 Branch Accounting", file: "subjects/accounts/studymaterial/one_acc/6 Branch Accounting.pdf", thumb: "" },
+            { title: "7 Framework for Preparation & Presentation", file: "subjects/accounts/studymaterial/one_acc/7 Framework for Preparation & Presentation of Financial Statements.pdf", thumb: "" },
+            { title: "8 Introduction & Applicability of AS", file: "subjects/accounts/studymaterial/one_acc/8 Introduction & Applicability of AS.pdf", thumb: "" },
+            { title: "9 AS 1", file: "subjects/accounts/studymaterial/one_acc/9 AS 1.pdf", thumb: "" },
+            { title: "10 AS 2", file: "subjects/accounts/studymaterial/one_acc/10 AS 2.pdf", thumb: "" },
+            { title: "11 AS 4", file: "subjects/accounts/studymaterial/one_acc/11 AS 4.pdf", thumb: "" },
+            { title: "12 AS 5", file: "subjects/accounts/studymaterial/one_acc/12 AS 5.pdf", thumb: "" },
+            { title: "13 AS 7", file: "subjects/accounts/studymaterial/one_acc/13 AS 7.pdf", thumb: "" },
+            { title: "14 AS 9", file: "subjects/accounts/studymaterial/one_acc/14 AS 9.pdf", thumb: "" },
+            { title: "15 AS 10", file: "subjects/accounts/studymaterial/one_acc/15 AS 10.pdf", thumb: "" },
+            { title: "16 AS 11", file: "subjects/accounts/studymaterial/one_acc/16 AS 11.pdf", thumb: "" },
+            { title: "17 AS 12", file: "subjects/accounts/studymaterial/one_acc/17 AS 12.pdf", thumb: "" },
+            { title: "18 AS 13", file: "subjects/accounts/studymaterial/one_acc/18 AS 13.pdf", thumb: "" },
+            { title: "19 AS 15", file: "subjects/accounts/studymaterial/one_acc/19 AS 15.pdf", thumb: "" },
+            { title: "20 AS 16", file: "subjects/accounts/studymaterial/one_acc/20 AS 16.pdf", thumb: "" },
+            { title: "21 AS 17", file: "subjects/accounts/studymaterial/one_acc/21 AS 17.pdf", thumb: "" },
+            { title: "22 AS 18", file: "subjects/accounts/studymaterial/one_acc/22 AS 18.pdf", thumb: "" },
+            { title: "23 AS 19", file: "subjects/accounts/studymaterial/one_acc/23 AS 19.pdf", thumb: "" },
+            { title: "24 AS 20", file: "subjects/accounts/studymaterial/one_acc/24 AS 20.pdf", thumb: "" },
+            { title: "25 AS 21", file: "subjects/accounts/studymaterial/one_acc/25 AS 21.pdf", thumb: "" },
+            { title: "26 AS 22", file: "subjects/accounts/studymaterial/one_acc/26 AS 22.pdf", thumb: "" },
+            { title: "27 AS 23", file: "subjects/accounts/studymaterial/one_acc/27 AS 23.pdf", thumb: "" },
+            { title: "28 AS 24", file: "subjects/accounts/studymaterial/one_acc/28 AS 24.pdf", thumb: "" },
+            { title: "29 AS 25", file: "subjects/accounts/studymaterial/one_acc/29 AS 25.pdf", thumb: "" },
+            { title: "30 AS 26", file: "subjects/accounts/studymaterial/one_acc/30 AS 26.pdf", thumb: "" },
+            { title: "31 AS 27", file: "subjects/accounts/studymaterial/one_acc/31 AS 27.pdf", thumb: "" },
+            { title: "32 AS 28", file: "subjects/accounts/studymaterial/one_acc/32 AS 28.pdf", thumb: "" },
+            { title: "33 AS 29", file: "subjects/accounts/studymaterial/one_acc/33 AS 29.pdf", thumb: "" }
+        ],
+        videos: [
+            { title: "Accounts Lecture 1", file: "https://www.youtube.com/watch?v=Xxmg8dbmIPM", thumb: "https://img.youtube.com/vi/Xxmg8dbmIPM/hqdefault.jpg" },
+            { title: "Accounts Lecture 2", file: "https://www.youtube.com/watch?v=MscATNcTjtA", thumb: "https://img.youtube.com/vi/MscATNcTjtA/hqdefault.jpg" },
+            { title: "Accounts Lecture 3", file: "https://www.youtube.com/watch?v=KoUmJI8TI3I", thumb: "https://img.youtube.com/vi/KoUmJI8TI3I/hqdefault.jpg" },
+            { title: "Accounts Lecture 4", file: "https://www.youtube.com/watch?v=hfoS2IFUP1g", thumb: "https://img.youtube.com/vi/hfoS2IFUP1g/hqdefault.jpg" },
+            { title: "Accounts Lecture 5", file: "https://www.youtube.com/watch?v=_53F1CfOZXA", thumb: "https://img.youtube.com/vi/_53F1CfOZXA/hqdefault.jpg" },
+            { title: "Accounts Lecture 6", file: "https://www.youtube.com/watch?v=7AF27bW3HQw", thumb: "https://img.youtube.com/vi/7AF27bW3HQw/hqdefault.jpg" },
+            { title: "Accounts Lecture 7", file: "https://www.youtube.com/watch?v=Fa-M2qFVC7Y", thumb: "https://img.youtube.com/vi/Fa-M2qFVC7Y/hqdefault.jpg" },
+            { title: "Accounts Lecture 8", file: "https://www.youtube.com/watch?v=1Rb-63UZfQA", thumb: "https://img.youtube.com/vi/1Rb-63UZfQA/hqdefault.jpg" },
+            { title: "Accounts Lecture 9", file: "https://www.youtube.com/watch?v=FonWm-L-DMc", thumb: "https://img.youtube.com/vi/FonWm-L-DMc/hqdefault.jpg" }
+        ]
+    },
+    "Law": { 
+        notes: [
+            { title: "Ch 1 - Preliminary", file: "subjects/law/studymaterial/law_mara_may/Ch 1 - Preliminary (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 2 - Incorporation", file: "subjects/law/studymaterial/law_mara_may/Ch 2 - Incorporation (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 3 - Prospectus", file: "subjects/law/studymaterial/law_mara_may/Ch 3 - Prospectus (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 4 - SC and DEB", file: "subjects/law/studymaterial/law_mara_may/Ch 4 - SC and DEB (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 5 - Deposits", file: "subjects/law/studymaterial/law_mara_may/Ch 5 - Deposits (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 6 - CHARGES", file: "subjects/law/studymaterial/law_mara_may/Ch 6 - CHARGES (STaR Sheets)..pdf", thumb: "" },
+            { title: "Ch 7 - M and A", file: "subjects/law/studymaterial/law_mara_may/Ch 7 - M and A (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 8 - DIVIDEND", file: "subjects/law/studymaterial/law_mara_may/Ch 8 - DIVIDEND (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 9 - ACCOUNTS", file: "subjects/law/studymaterial/law_mara_may/Ch 9 - ACCOUNTS (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 10 - Audit and Auditors", file: "subjects/law/studymaterial/law_mara_may/Ch 10 - Audit and Auditors (STaR Sheets).pdf", thumb: "" },
+            { title: "Ch 11 - CIOI", file: "subjects/law/studymaterial/law_mara_may/Ch 11 - CIOI (STaR Sheets).pdf", thumb: "" },
+            { title: "Corporate Law Marathon - MAY 26", file: "subjects/law/studymaterial/law_mara_may/Corporate Law Marathon - MAY 26.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "Law Lecture 1", file: "https://www.youtube.com/watch?v=54JQYwSdh7I", thumb: "https://img.youtube.com/vi/54JQYwSdh7I/hqdefault.jpg" },
+            { title: "Law Lecture 2", file: "https://www.youtube.com/watch?v=bU4_LZcwlXM", thumb: "https://img.youtube.com/vi/bU4_LZcwlXM/hqdefault.jpg" },
+            { title: "Law Lecture 3", file: "https://www.youtube.com/watch?v=W2yhnzeZapQ", thumb: "https://img.youtube.com/vi/W2yhnzeZapQ/hqdefault.jpg" },
+            { title: "Law Lecture 4", file: "https://www.youtube.com/watch?v=DuRdG6uWxiE", thumb: "https://img.youtube.com/vi/DuRdG6uWxiE/hqdefault.jpg" },
+            { title: "Law Lecture 5", file: "https://www.youtube.com/watch?v=dIdOpLDGkD8", thumb: "https://img.youtube.com/vi/dIdOpLDGkD8/hqdefault.jpg" },
+            { title: "Law Lecture 6", file: "https://www.youtube.com/watch?v=BO-jrUI5QvQ", thumb: "https://img.youtube.com/vi/BO-jrUI5QvQ/hqdefault.jpg" },
+            { title: "Law Lecture 7", file: "https://www.youtube.com/watch?v=iS9tVxWcSQ0", thumb: "https://img.youtube.com/vi/iS9tVxWcSQ0/hqdefault.jpg" },
+            { title: "Law Lecture 8", file: "https://www.youtube.com/watch?v=scqyCP03-SQ", thumb: "https://img.youtube.com/vi/scqyCP03-SQ/hqdefault.jpg" },
+            { title: "Law Lecture 9", file: "https://www.youtube.com/watch?v=-fONbQ_AsPc", thumb: "https://img.youtube.com/vi/-fONbQ_AsPc/hqdefault.jpg" },
+            { title: "Law Lecture 10", file: "https://www.youtube.com/watch?v=k40G5TR_O-A", thumb: "https://img.youtube.com/vi/k40G5TR_O-A/hqdefault.jpg" },
+            { title: "Law Lecture 11", file: "https://www.youtube.com/watch?v=_zVt4MOpkb4", thumb: "https://img.youtube.com/vi/_zVt4MOpkb4/hqdefault.jpg" },
+            { title: "Law Lecture 12", file: "https://www.youtube.com/watch?v=OL6lo7XWvtI", thumb: "https://img.youtube.com/vi/OL6lo7XWvtI/hqdefault.jpg" },
+            { title: "Law Lecture 13", file: "https://www.youtube.com/watch?v=UvimvstwKPU", thumb: "https://img.youtube.com/vi/UvimvstwKPU/hqdefault.jpg" },
+            { title: "Law Lecture 14", file: "https://www.youtube.com/watch?v=YZw3t7fn5FE", thumb: "https://img.youtube.com/vi/YZw3t7fn5FE/hqdefault.jpg" }
+        ] 
+    },
+    "Income Tax": { 
+        notes: [
+            { title: "Agriculture", file: "subjects/incometax/studymaterial/one_tax/agriculture.pdf", thumb: "" },
+            { title: "Amendments", file: "subjects/incometax/studymaterial/one_tax/amemendments.pdf", thumb: "" },
+            { title: "Basic Concepts", file: "subjects/incometax/studymaterial/one_tax/Basic Concepts 01  Class Notes.pdf", thumb: "" },
+            { title: "Capital Gain Annotated", file: "subjects/incometax/studymaterial/one_tax/Capital Gain 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Chapter 4 Clubbing of Income", file: "subjects/incometax/studymaterial/one_tax/Chapter 4 Clubbing of income.pdf", thumb: "" },
+            { title: "Chapter 5 Set off and CF", file: "subjects/incometax/studymaterial/one_tax/Chapter 5 Set off and CF of losses.pdf", thumb: "" },
+            { title: "Deductions", file: "subjects/incometax/studymaterial/one_tax/Deductions 01  Class Notes.pdf", thumb: "" },
+            { title: "E-Book Taxation", file: "subjects/incometax/studymaterial/one_tax/E-Book  Taxation.pdf", thumb: "" },
+            { title: "House Property", file: "subjects/incometax/studymaterial/one_tax/House Property 01 CLASS NOTES.pdf", thumb: "" },
+            { title: "PGBP", file: "subjects/incometax/studymaterial/one_tax/PGBP 01  Class Notes.pdf", thumb: "" },
+            { title: "Residential Status", file: "subjects/incometax/studymaterial/one_tax/Residential Status 01  Class Notes.pdf", thumb: "" },
+            { title: "Salary", file: "subjects/incometax/studymaterial/one_tax/Salary 01  Class Notes.pdf", thumb: "" },
+            { title: "Section 115 BACAMT", file: "subjects/incometax/studymaterial/one_tax/Section 115 BACAMT 01  Class Notes.pdf", thumb: "" },
+            { title: "TDS, TCS, Adv Tax", file: "subjects/incometax/studymaterial/one_tax/TDS,TCS,Adv Tax 01  Class Notes.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "Income Tax Lecture 1", file: "https://www.youtube.com/watch?v=28ZtQqtqYP8", thumb: "https://img.youtube.com/vi/28ZtQqtqYP8/hqdefault.jpg" },
+            { title: "Income Tax Lecture 2", file: "https://www.youtube.com/watch?v=0jaJzJ4OBuc", thumb: "https://img.youtube.com/vi/0jaJzJ4OBuc/hqdefault.jpg" },
+            { title: "Income Tax Lecture 3", file: "https://www.youtube.com/watch?v=-9alT2mV5L8", thumb: "https://img.youtube.com/vi/-9alT2mV5L8/hqdefault.jpg" },
+            { title: "Income Tax Lecture 4", file: "https://www.youtube.com/watch?v=BPyqUr_r260", thumb: "https://img.youtube.com/vi/BPyqUr_r260/hqdefault.jpg" },
+            { title: "Income Tax Lecture 5", file: "https://www.youtube.com/watch?v=g5G1Am27UH0", thumb: "https://img.youtube.com/vi/g5G1Am27UH0/hqdefault.jpg" },
+            { title: "Income Tax Lecture 6", file: "https://www.youtube.com/watch?v=qkqMEfs8oFw", thumb: "https://img.youtube.com/vi/qkqMEfs8oFw/hqdefault.jpg" },
+            { title: "Income Tax Lecture 7", file: "https://www.youtube.com/watch?v=T2URsNnAt9M", thumb: "https://img.youtube.com/vi/T2URsNnAt9M/hqdefault.jpg" },
+            { title: "Income Tax Lecture 8", file: "https://www.youtube.com/watch?v=EkBLh4tzvwM", thumb: "https://img.youtube.com/vi/EkBLh4tzvwM/hqdefault.jpg" },
+            { title: "Income Tax Lecture 9", file: "https://www.youtube.com/watch?v=qlVlat3nnN4", thumb: "https://img.youtube.com/vi/qlVlat3nnN4/hqdefault.jpg" },
+            { title: "Income Tax Lecture 10", file: "https://www.youtube.com/watch?v=mY-XJPSC-ho", thumb: "https://img.youtube.com/vi/mY-XJPSC-ho/hqdefault.jpg" },
+            { title: "Income Tax Lecture 11", file: "https://www.youtube.com/watch?v=8wFFnSgHmCA", thumb: "https://img.youtube.com/vi/8wFFnSgHmCA/hqdefault.jpg" },
+            { title: "Income Tax Lecture 12", file: "https://www.youtube.com/watch?v=ozF5Ute52yo", thumb: "https://img.youtube.com/vi/ozF5Ute52yo/hqdefault.jpg" },
+            { title: "Income Tax Lecture 13", file: "https://www.youtube.com/watch?v=TmzCkjp4gcE", thumb: "https://img.youtube.com/vi/TmzCkjp4gcE/hqdefault.jpg" },
+            { title: "Income Tax Lecture 14", file: "https://www.youtube.com/watch?v=awuxGcKKxo0", thumb: "https://img.youtube.com/vi/awuxGcKKxo0/hqdefault.jpg" },
+            { title: "Income Tax Lecture 15", file: "https://www.youtube.com/watch?v=kl0IH8Ust7w", thumb: "https://img.youtube.com/vi/kl0IH8Ust7w/hqdefault.jpg" },
+            { title: "Income Tax Lecture 16", file: "https://www.youtube.com/watch?v=fCQh6AGIq0A", thumb: "https://img.youtube.com/vi/fCQh6AGIq0A/hqdefault.jpg" },
+            { title: "Income Tax Lecture 17", file: "https://www.youtube.com/watch?v=IE1dBiO0WIc", thumb: "https://img.youtube.com/vi/IE1dBiO0WIc/hqdefault.jpg" },
+            { title: "Income Tax Lecture 18", file: "https://www.youtube.com/watch?v=6nSye6c9FsM", thumb: "https://img.youtube.com/vi/6nSye6c9FsM/hqdefault.jpg" },
+            { title: "Income Tax Lecture 19", file: "https://www.youtube.com/watch?v=ah8xKHJc42c", thumb: "https://img.youtube.com/vi/ah8xKHJc42c/hqdefault.jpg" },
+            { title: "Income Tax Lecture 20", file: "https://www.youtube.com/watch?v=eiB-pzdFwck", thumb: "https://img.youtube.com/vi/eiB-pzdFwck/hqdefault.jpg" },
+            { title: "Income Tax Lecture 21", file: "https://www.youtube.com/watch?v=xEKPAGOY5Ck", thumb: "https://img.youtube.com/vi/xEKPAGOY5Ck/hqdefault.jpg" },
+            { title: "Income Tax Lecture 22", file: "https://www.youtube.com/watch?v=Ew1BE_CO0-Q", thumb: "https://img.youtube.com/vi/Ew1BE_CO0-Q/hqdefault.jpg" },
+            { title: "Income Tax Lecture 23", file: "https://www.youtube.com/watch?v=laIdjVyw2yM", thumb: "https://img.youtube.com/vi/laIdjVyw2yM/hqdefault.jpg" }
+        ] 
+    },
+    "GST": { 
+        notes: [
+            { title: "Composition Scheme Unannotated", file: "subjects/gst/studymaterial/one_gst/Composition Scheme 01  Unannotated Notes.pdf", thumb: "" },
+            { title: "E-Book Taxation (GST)", file: "subjects/gst/studymaterial/one_gst/E-Book  Taxation (GST).pdf", thumb: "" },
+            { title: "E-Way Bill", file: "subjects/gst/studymaterial/one_gst/E-Way Bill class notes.pdf", thumb: "" },
+            { title: "Exemptions Unannotated", file: "subjects/gst/studymaterial/one_gst/Exemptions 01  Unannotated Notes.pdf", thumb: "" },
+            { title: "Input Tax Credit", file: "subjects/gst/studymaterial/one_gst/Input Tax Credit one shot notes.pdf", thumb: "" },
+            { title: "Place, Value, Time of Supply", file: "subjects/gst/studymaterial/one_gst/Place of Supply, Value of Supply, Time of Supply 01  Class Notes.pdf", thumb: "" },
+            { title: "Registration", file: "subjects/gst/studymaterial/one_gst/Registration 01  Class Notes.pdf", thumb: "" },
+            { title: "Returns", file: "subjects/gst/studymaterial/one_gst/returns class notes.pdf", thumb: "" },
+            { title: "Reverse Charge Mechanism", file: "subjects/gst/studymaterial/one_gst/Reverse Charge Mechanism class notes.pdf", thumb: "" },
+            { title: "Tax Invoice, Debit/Credit Notes", file: "subjects/gst/studymaterial/one_gst/Tax Invoice debit and credit note class notes.pdf", thumb: "" },
+            { title: "TDS, TCS, Supply GST", file: "subjects/gst/studymaterial/one_gst/tds,tcs,supply_gst.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "GST Lecture 1", file: "https://www.youtube.com/watch?v=xFbUzPjVkIM", thumb: "https://img.youtube.com/vi/xFbUzPjVkIM/hqdefault.jpg" },
+            { title: "GST Lecture 2", file: "https://www.youtube.com/watch?v=Y30MPv1D-h0", thumb: "https://img.youtube.com/vi/Y30MPv1D-h0/hqdefault.jpg" },
+            { title: "GST Lecture 3", file: "https://www.youtube.com/watch?v=xVh2wiVDmEs", thumb: "https://img.youtube.com/vi/xVh2wiVDmEs/hqdefault.jpg" },
+            { title: "GST Lecture 4", file: "https://www.youtube.com/watch?v=xVh2wiVDmEs", thumb: "https://img.youtube.com/vi/xVh2wiVDmEs/hqdefault.jpg" },
+            { title: "GST Lecture 5", file: "https://www.youtube.com/watch?v=_mqwd4BOR70", thumb: "https://img.youtube.com/vi/_mqwd4BOR70/hqdefault.jpg" },
+            { title: "GST Lecture 6", file: "https://www.youtube.com/watch?v=BcyfG5RgyY0", thumb: "https://img.youtube.com/vi/BcyfG5RgyY0/hqdefault.jpg" },
+            { title: "GST Lecture 7", file: "https://www.youtube.com/watch?v=xe7-hWEXRPQ", thumb: "https://img.youtube.com/vi/xe7-hWEXRPQ/hqdefault.jpg" },
+            { title: "GST Lecture 8", file: "https://www.youtube.com/watch?v=zkH2WOVjqGw", thumb: "https://img.youtube.com/vi/zkH2WOVjqGw/hqdefault.jpg" },
+            { title: "GST Lecture 9", file: "https://www.youtube.com/watch?v=MBH6BkMK2J8", thumb: "https://img.youtube.com/vi/MBH6BkMK2J8/hqdefault.jpg" },
+            { title: "GST Lecture 10", file: "https://www.youtube.com/watch?v=MBH6BkMK2J8", thumb: "https://img.youtube.com/vi/MBH6BkMK2J8/hqdefault.jpg" },
+            { title: "GST Lecture 11", file: "https://www.youtube.com/watch?v=9QemTiBRvyY", thumb: "https://img.youtube.com/vi/9QemTiBRvyY/hqdefault.jpg" },
+            { title: "GST Lecture 12", file: "https://www.youtube.com/watch?v=9QemTiBRvyY", thumb: "https://img.youtube.com/vi/9QemTiBRvyY/hqdefault.jpg" },
+            { title: "GST Lecture 13", file: "https://www.youtube.com/watch?v=RLZIMpSAels", thumb: "https://img.youtube.com/vi/RLZIMpSAels/hqdefault.jpg" },
+            { title: "GST Lecture 14", file: "https://www.youtube.com/watch?v=SQ1I_pz-qdg", thumb: "https://img.youtube.com/vi/SQ1I_pz-qdg/hqdefault.jpg" },
+            { title: "GST Lecture 15", file: "https://www.youtube.com/watch?v=PUbrq7ZOorU", thumb: "https://img.youtube.com/vi/PUbrq7ZOorU/hqdefault.jpg" },
+            { title: "GST Lecture 16", file: "https://www.youtube.com/watch?v=cZ4wcu1MtLA", thumb: "https://img.youtube.com/vi/cZ4wcu1MtLA/hqdefault.jpg" },
+            { title: "GST Lecture 17", file: "https://www.youtube.com/watch?v=WdQ28oSLXo8", thumb: "https://img.youtube.com/vi/WdQ28oSLXo8/hqdefault.jpg" }
+        ] 
+    },
+    "Costing": { 
+        notes: [
+            { title: "Activity Based Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Activity Based Costing  Annotated Notes.pdf", thumb: "" },
+            { title: "Cost Accounting System (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Cost Accounting System 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Cost Sheet (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Cost Sheet 01  Annotted Notes.pdf", thumb: "" },
+            { title: "Employee Cost & Direct Expenses (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Employee Cost and Direct Expenses 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Job and Batch Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Job and Batch Costing 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Joint and By-Product Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Joint and By-Product Costing 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Marginal Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Marginal Costing 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Overheads (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Overheads 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Process Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Process Costing 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Standard Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/annotated Standard Costing 2.pdf", thumb: "" },
+            { title: "Service Costing (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Annoted 11. Service Costing 2.pdf", thumb: "" },
+            { title: "Budget & Budgetary Control (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Annoted 13. Budget & Budgetary Control 2.pdf", thumb: "" },
+            { title: "Material Cost (Annotated)", file: "subjects/costing/studymaterial/one_cos/anouted/Annotted File - Material Cost.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "Costing Lecture 1", file: "https://www.youtube.com/watch?v=Fpgg4B4cHyc", thumb: "https://img.youtube.com/vi/Fpgg4B4cHyc/hqdefault.jpg" },
+            { title: "Costing Lecture 2", file: "https://www.youtube.com/watch?v=0E53NarJMnY", thumb: "https://img.youtube.com/vi/0E53NarJMnY/hqdefault.jpg" },
+            { title: "Costing Lecture 3", file: "https://www.youtube.com/watch?v=FfKGH4yUP1o", thumb: "https://img.youtube.com/vi/FfKGH4yUP1o/hqdefault.jpg" },
+            { title: "Costing Lecture 4", file: "https://www.youtube.com/watch?v=fVd87lETLJE", thumb: "https://img.youtube.com/vi/fVd87lETLJE/hqdefault.jpg" },
+            { title: "Costing Lecture 5", file: "https://www.youtube.com/watch?v=u0BI2EOH9BE", thumb: "https://img.youtube.com/vi/u0BI2EOH9BE/hqdefault.jpg" },
+            { title: "Costing Lecture 6", file: "https://www.youtube.com/watch?v=Y230Oqtu0kg", thumb: "https://img.youtube.com/vi/Y230Oqtu0kg/hqdefault.jpg" },
+            { title: "Costing Lecture 7", file: "https://www.youtube.com/watch?v=PXskuHb_944", thumb: "https://img.youtube.com/vi/PXskuHb_944/hqdefault.jpg" },
+            { title: "Costing Lecture 8", file: "https://www.youtube.com/watch?v=OXSz5nH9fZE", thumb: "https://img.youtube.com/vi/OXSz5nH9fZE/hqdefault.jpg" },
+            { title: "Costing Lecture 9", file: "https://www.youtube.com/watch?v=2NjoFrk9Uxw", thumb: "https://img.youtube.com/vi/2NjoFrk9Uxw/hqdefault.jpg" },
+            { title: "Costing Lecture 10", file: "https://www.youtube.com/watch?v=pjJ4j-Lmw98", thumb: "https://img.youtube.com/vi/pjJ4j-Lmw98/hqdefault.jpg" },
+            { title: "Costing Lecture 11", file: "https://www.youtube.com/watch?v=6GoiiwmqGe8", thumb: "https://img.youtube.com/vi/6GoiiwmqGe8/hqdefault.jpg" },
+            { title: "Costing Lecture 12", file: "https://www.youtube.com/watch?v=gaVikfOTpO4", thumb: "https://img.youtube.com/vi/gaVikfOTpO4/hqdefault.jpg" },
+            { title: "Costing Lecture 13", file: "https://www.youtube.com/watch?v=WR7dMsQfNx0", thumb: "https://img.youtube.com/vi/WR7dMsQfNx0/hqdefault.jpg" }
+        ] 
+    },
+    "Audit": { 
+        notes: [
+            { title: "SA 230 Notes", file: "subjects/audit/studymaterial/one_audit/5 SA 230_class notes.pdf", thumb: "" },
+            { title: "Audit Evidence", file: "subjects/audit/studymaterial/one_audit/Audit Evidence (SA 500, 501, 505, 510, 520, 530, 550) 01  Class Notes.pdf", thumb: "" },
+            { title: "Audit of bank", file: "subjects/audit/studymaterial/one_audit/Audit of bank 01 Class Notes.pdf", thumb: "" },
+            { title: "Audit of Different Types of Entities", file: "subjects/audit/studymaterial/one_audit/Audit of Different Types of Entites 01  Class Notes.pdf", thumb: "" },
+            { title: "Audit of items of Financial Statements", file: "subjects/audit/studymaterial/one_audit/Audit of items of Financial Statements 01  Class Notes.pdf", thumb: "" },
+            { title: "Audit report", file: "subjects/audit/studymaterial/one_audit/Audit report (sa 299, 600, 700, 701, 705, 706, 710) 01 Class  Notes.pdf", thumb: "" },
+            { title: "Audit Strategy, Planning and Programme", file: "subjects/audit/studymaterial/one_audit/Audit Strategy, Planning and Programme 01  Class Notes.pdf", thumb: "" },
+            { title: "CARO 2020", file: "subjects/audit/studymaterial/one_audit/CARO 2020 01  Class Notes.pdf", thumb: "" },
+            { title: "Completion and review", file: "subjects/audit/studymaterial/one_audit/Completion and review (SA 260, 265, SA 560, 570, 580, 450) 01 Class Notes.pdf", thumb: "" },
+            { title: "Ethics and terms of audit engagement", file: "subjects/audit/studymaterial/one_audit/Ethics and terms of audit engagement (SA 210, SQC 1 & SA 220) 01  Class Notes (1).pdf", thumb: "" },
+            { title: "Nature, Objective and Scope of Audit", file: "subjects/audit/studymaterial/one_audit/Nature, Objective and Scope of Audit 01  Class Notes.pdf", thumb: "" },
+            { title: "Risk Assessment", file: "subjects/audit/studymaterial/one_audit/Risk Assesment.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "Audit Lecture 1", file: "https://www.youtube.com/watch?v=tWQnrBzWikM", thumb: "https://img.youtube.com/vi/tWQnrBzWikM/hqdefault.jpg" },
+            { title: "Audit Lecture 2", file: "https://www.youtube.com/watch?v=u3FMVqnDr1c", thumb: "https://img.youtube.com/vi/u3FMVqnDr1c/hqdefault.jpg" },
+            { title: "Audit Lecture 3", file: "https://www.youtube.com/watch?v=x0ZTU8OTk1c", thumb: "https://img.youtube.com/vi/x0ZTU8OTk1c/hqdefault.jpg" },
+            { title: "Audit Lecture 4", file: "https://www.youtube.com/watch?v=plOUY_3fe0w", thumb: "https://img.youtube.com/vi/plOUY_3fe0w/hqdefault.jpg" },
+            { title: "Audit Lecture 5", file: "https://www.youtube.com/watch?v=1azFVOsR11Q", thumb: "https://img.youtube.com/vi/1azFVOsR11Q/hqdefault.jpg" },
+            { title: "Audit Lecture 6", file: "https://www.youtube.com/watch?v=7AN1ecK6wps", thumb: "https://img.youtube.com/vi/7AN1ecK6wps/hqdefault.jpg" },
+            { title: "Audit Lecture 7", file: "https://www.youtube.com/watch?v=O4_sSgimzhg", thumb: "https://img.youtube.com/vi/O4_sSgimzhg/hqdefault.jpg" },
+            { title: "Audit Lecture 8", file: "https://www.youtube.com/watch?v=bSmoopNQSCE", thumb: "https://img.youtube.com/vi/bSmoopNQSCE/hqdefault.jpg" },
+            { title: "Audit Lecture 9", file: "https://www.youtube.com/watch?v=F3SrSfsuKN0", thumb: "https://img.youtube.com/vi/F3SrSfsuKN0/hqdefault.jpg" },
+            { title: "Audit Lecture 10", file: "https://www.youtube.com/watch?v=Pcl1iftHRn4", thumb: "https://img.youtube.com/vi/Pcl1iftHRn4/hqdefault.jpg" },
+            { title: "Audit Lecture 11", file: "https://www.youtube.com/watch?v=R-zKCPWY6gs", thumb: "https://img.youtube.com/vi/R-zKCPWY6gs/hqdefault.jpg" },
+            { title: "Audit Lecture 12", file: "https://www.youtube.com/watch?v=23vwhUer8kI", thumb: "https://img.youtube.com/vi/23vwhUer8kI/hqdefault.jpg" }
+        ] 
+    },
+    "FM": { 
+        notes: [
+            { title: "FM Book", file: "subjects/fm/studymaterial/one_fm/book.pdf", thumb: "" },
+            { title: "Capital Structure (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/3. Capital Structure.pdf", thumb: "" },
+            { title: "Dividend Decision (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/4. Dividend Decision Anoted.pdf", thumb: "" },
+            { title: "Cash Management (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Annotated - 9. Cash Management.pdf", thumb: "" },
+            { title: "Leverage (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Annoted 2. Leverage  class notes.pdf", thumb: "" },
+            { title: "Cost of Capital (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Cost of Capital 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Investment decision (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Investment decision 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Ratio Analysis (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Ratio Analysis 01  Annotated Notes.pdf", thumb: "" },
+            { title: "Receivable Management (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Receivable Management 01 Annotated Notes.pdf", thumb: "" },
+            { title: "Working Capital Management (Annotated)", file: "subjects/fm/studymaterial/one_fm/anoted/Working Capital Management  Annotated Notes.pdf", thumb: "" }
+        ], 
+        videos: [
+            { title: "FM Lecture 1", file: "https://www.youtube.com/watch?v=DiTocJeU7pw", thumb: "https://img.youtube.com/vi/DiTocJeU7pw/hqdefault.jpg" },
+            { title: "FM Lecture 2", file: "https://www.youtube.com/watch?v=-gxbatCWZ-s", thumb: "https://img.youtube.com/vi/-gxbatCWZ-s/hqdefault.jpg" },
+            { title: "FM Lecture 3", file: "https://www.youtube.com/watch?v=mxcJZ5IdFDU", thumb: "https://img.youtube.com/vi/mxcJZ5IdFDU/hqdefault.jpg" },
+            { title: "FM Lecture 4", file: "https://www.youtube.com/watch?v=qdZX8LYqcEw", thumb: "https://img.youtube.com/vi/qdZX8LYqcEw/hqdefault.jpg" },
+            { title: "FM Lecture 5", file: "https://www.youtube.com/watch?v=tDoFlrMFx1M", thumb: "https://img.youtube.com/vi/tDoFlrMFx1M/hqdefault.jpg" },
+            { title: "FM Lecture 6", file: "https://www.youtube.com/watch?v=jdyNfoXH9zM", thumb: "https://img.youtube.com/vi/jdyNfoXH9zM/hqdefault.jpg" },
+            { title: "FM Lecture 7", file: "https://www.youtube.com/watch?v=v3qxI3Hnhic", thumb: "https://img.youtube.com/vi/v3qxI3Hnhic/hqdefault.jpg" },
+            { title: "FM Lecture 8", file: "https://www.youtube.com/watch?v=M-19V9oCA00", thumb: "https://img.youtube.com/vi/M-19V9oCA00/hqdefault.jpg" },
+            { title: "FM Lecture 9", file: "https://www.youtube.com/watch?v=dXhZm2v7jnQ", thumb: "https://img.youtube.com/vi/dXhZm2v7jnQ/hqdefault.jpg" }
+        ] 
+    },
+    "SM": {
+        notes: [
+            { title: "Chart Notes", file: "subjects/sm/studymaterial/one_sm/Chart Notes class notes.pdf", thumb: "" },
+            { title: "Detailed Notes", file: "subjects/sm/studymaterial/one_sm/Detailed Notes.pdf", thumb: "" }
+        ],
+        videos: [
+            { title: "SM Lecture 1", file: "https://youtu.be/u7KBnDyq9pQ?si=_h9Oaximr2MbU4bx", thumb: "https://img.youtube.com/vi/u7KBnDyq9pQ/hqdefault.jpg" }
+        ]
+    }
+};
+
+/* ── SIDEBAR HELPERS ───────────────────────────────────── */
+function buildNav(items) {
+    sideNavbar.innerHTML = "";
+    items.forEach(({ icon, label, onClick, active }) => {
+        const a = document.createElement("a");
+        a.href = "#";
+        a.innerHTML = `<span class="icon">${icon}</span><span>${label}</span>`;
+        if (active) a.classList.add("active");
+        a.addEventListener("click", e => {
+            e.preventDefault();
+            sideNavbar.querySelectorAll("a").forEach(l => l.classList.remove("active"));
+            a.classList.add("active");
+            onClick();
+        });
+        sideNavbar.appendChild(a);
+    });
+}
+
+/* ── LIBRARY ───────────────────────────────────────────── */
+const libraryItems = [
+    { icon:"📊", label:"Accounts",    onClick:() => loadSubject("Accounts")  },
+    { icon:"⚖️",  label:"Law",         onClick:() => loadSubject("Law")       },
+    { icon:"💰", label:"Income Tax",  onClick:() => loadSubject("Income Tax")},
+    { icon:"🧾", label:"GST",         onClick:() => loadSubject("GST")       },
+    { icon:"📈", label:"Costing",     onClick:() => loadSubject("Costing")   },
+    { icon:"🔍", label:"Audit",       onClick:() => loadSubject("Audit")     },
+    { icon:"📉", label:"FM",          onClick:() => loadSubject("FM")        },
+    { icon:"🧠", label:"SM",          onClick:() => loadSubject("SM")        },
+];
+
+function loadSubject(name) {
+    const data = libraryMap[name] || { notes: [], videos: [] };
+
+    let html = `
+        <h2>${name}</h2>
+        <p>Select a resource below to open in a new tab.</p>
+    `;
+
+    // Build Notes Section
+    html += `<div class="card"><h3>📚 Notes</h3><div class="media-grid">`;
+    if (data.notes.length > 0) {
+        data.notes.forEach(note => {
+            html += `
+            <a href="${note.file}" target="_blank" class="media-card">
+                <img src="${note.thumb}" alt="PDF Thumbnail" class="media-thumb" onerror="this.style.display='none'">
+                <span class="media-title">${note.title}</span>
+            </a>`;
+        });
+    } else {
+        html += `<p style="grid-column: 1 / -1; color: #666;">No notes added yet.</p>`;
+    }
+    html += `</div></div>`;
+
+    // Build Videos Section
+    html += `<div class="card"><h3>🎥 Videos</h3><div class="media-grid">`;
+    if (data.videos.length > 0) {
+        data.videos.forEach(video => {
+            html += `
+            <a href="${video.file}" target="_blank" class="media-card">
+                <img src="${video.thumb}" alt="Video Thumbnail" class="media-thumb" onerror="this.style.display='none'">
+                <span class="media-title">${video.title}</span>
+            </a>`;
+        });
+    } else {
+        html += `<p style="grid-column: 1 / -1; color: #666;">No videos added yet.</p>`;
+    }
+    html += `</div></div>`;
+
+    mainContent.innerHTML = html;
+}
+
+function enterLibraryMode() {
+    const items = libraryItems.map((it, i) => ({ ...it, active: i === 0 }));
+    buildNav(items);
+    loadSubject("Accounts");
+}
+
+/* ── EXAM HALL ─────────────────────────────────────────── */
+const examItems = [
+    { icon:"📋", label:"MTP", onClick:() => loadExam("MTP") },
+    { icon:"📑", label:"RTP", onClick:() => loadExam("RTP") },
+    { icon:"🗂️", label:"Previous Year QP", onClick:() => loadExam("PYQ") },
+    { icon:"💼", label:"Case Studies", onClick:() => loadExam("CASE_STUDY") },
+    { icon:"🏆", label:"Mega MTP", onClick:() => loadExam("MEGA_MTP") }
+];
+
+function loadExam(type) {
+    const data = fileMap[type];
+    const titles = { 
+        MTP:"Mock Test Papers", 
+        RTP:"Revision Test Papers", 
+        PYQ:"Previous Year Question Papers",
+        CASE_STUDY: "Case Study Books",
+        MEGA_MTP: "Mega Mock Test Papers"
+    };
+    let html = `<h2>${titles[type]}</h2><p>Download papers and official answers as PDF.</p>`;
+
+    for (const group in data) {
+        html += `<div class="card"><h3>📅 ${group}</h3><ul class="paper-list">`;
+        data[group].forEach(item => {
+            html += `
+                <li>
+                    <span class="year">${item.name}</span>
+                    <div>
+                        ${item.qFile ? `<a class="paper-btn" href="${item.qFile}" target="_blank">📄 Question Paper</a>` : ''}
+                        ${item.aFile ? `<a class="paper-btn" href="${item.aFile}" target="_blank">✅ Answers</a>` : ''}
+                        ${item.file ? `<a class="paper-btn" href="${item.file}" target="_blank">📄 Document</a>` : ''}
+                        ${item.fileAlt ? `<a class="paper-btn" href="${item.fileAlt}" target="_blank">📄 Decrypted/Alt</a>` : ''}
+                    </div>
+                </li>`;
+        });
+        html += `</ul></div>`;
+    }
+    mainContent.innerHTML = html;
+}
+
+function enterExamMode() {
+    const items = examItems.map((it, i) => ({ ...it, active: i === 0 }));
+    buildNav(items);
+    loadExam("MTP");
+}
+
+/* ── SEARCH BAR LOGIC ──────────────────────────────────── */
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchInput");
+const searchEngine = document.getElementById("searchEngine");
+
+searchForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const query = encodeURIComponent(searchInput.value.trim());
+    if (!query) return;
+
+    let url = "";
+    const engine = searchEngine.value;
+
+    if (engine === "google") {
+        url = `https://www.google.com/search?q=${query}`;
+    } else if (engine === "youtube") {
+        url = `https://www.youtube.com/results?search_query=${query}`;
+    } else if (engine === "chatgpt") {
+        // Directs to ChatGPT search
+        url = `https://chatgpt.com/?q=${query}`;
+    } else if (engine === "claude") {
+        // Directs to Claude (standard entry point)
+        url = `https://claude.ai/chat`;
+    } else if (engine === "gemini") {
+        // Directs to Gemini with query
+        url = `https://gemini.google.com/app?q=${query}`;
+    }
+
+    if (url) {
+        window.open(url, "_blank");
+    }
+});
+
+/* ── MODE TOGGLE ───────────────────────────────────────── */
+modeToggleBtn.addEventListener("click", () => {
+    isExamMode = !isExamMode;
+    document.body.classList.toggle("examhall", isExamMode);
+
+    if (isExamMode) {
+        logoIcon.textContent  = "🏛️";
+        logoText.textContent  = "CA Exam Hall";
+        modeBadge.textContent = "Exam Hall";
+        enterExamMode();
+    } else {
+        logoIcon.textContent  = "📚";
+        logoText.textContent  = "CA Library";
+        modeBadge.textContent = "Library";
+        enterLibraryMode();
+    }
+});
+
+/* ── SIDEBAR COLLAPSE ──────────────────────────────────── */
+document.getElementById("toggleBtn").addEventListener("click", () => {
+    document.body.classList.toggle("collapsed");
+});
+
+/* ── BOOT ──────────────────────────────────────────────── */
+enterLibraryMode();
+</script>
+</body>
+</html>
